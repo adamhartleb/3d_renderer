@@ -5,11 +5,12 @@
 #include "display.h"
 #include "vector.h"
 #include "mesh.h"
+#include "array.h"
 
 vec3_t camera_position = { 0, 0, -5 }; 
 vec3_t cube_rotation = { 0, 0, 0 };
 
-triangle_t triangles_to_render[N_MESH_FACES];
+triangle_t* triangles_to_render = NULL;
 
 float fov_factor = 1280;
 
@@ -68,6 +69,8 @@ void update(void) {
 
     previous_frame_time = current_time + time_to_wait;
 
+    triangles_to_render = NULL;
+
     cube_rotation.x += 0.01;
     cube_rotation.y += 0.01;
     cube_rotation.z += 0.01;
@@ -99,7 +102,7 @@ void update(void) {
             projected_triangle.points[j] = projected_vertex;
         }
 
-        triangles_to_render[i] = projected_triangle;
+        array_push(triangles_to_render, projected_triangle);
     }
 }
 
@@ -107,11 +110,15 @@ void render(void) {
     render_color_buffer();
     clear_color_buffer(0xFF000000);
 
-    for (int i = 0; i < N_MESH_FACES; i++) {
+    int num_triangles = array_length(triangles_to_render);
+
+    for (int i = 0; i < num_triangles; i++) {
         triangle_t triangle = triangles_to_render[i];
 
         draw_triangle(triangle);
     } 
+
+    array_free(triangles_to_render);
 
     SDL_RenderPresent(renderer);
 }
